@@ -39,6 +39,8 @@ else
  */
 set_include_path(
 	get_include_path()
+	.PATH_SEPARATOR.'../../../../icinga-web2/library'
+	.PATH_SEPARATOR.'../../../../icinga-web2/library/vendor'
 	.PATH_SEPARATOR.'../../server/core/classes'
 	.PATH_SEPARATOR.'../../server/core/classes/objects'
 	.PATH_SEPARATOR.'../../server/core/ext/php-gettext-1.0.12'
