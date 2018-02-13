@@ -655,10 +655,18 @@ check_php_version() {
         PHP_VER=`$PKG -l "php[0-9]" 2>/dev/null | grep "php" | grep ii | awk -F' ' '{ print $3 }' | sed "s/-.*$//" | cut -d"." -f1,2`
     elif [ "${PKG##/*/}" = "rpm" ]; then
         PHP_VER=`$PKG -qa "php[0-9]" | sed "s/php[0-9]\-//g" | sed "s/-.*$//" | cut -d"." -f1,2`
+    elif [ "${PKG##/*/}" = "pkg_info" ]; then
+            PHP_VER=`$PKG | grep "php-[0-9]" | awk '{print $1}'| sed "s/php-//g" | sed "s/p[0-9]*//"`
+	    PHP_MIN_MAJ=`echo ${PHP_VER} | cut -d '.' -f 1-2`
     else
         PHP_VER=`$PKG list installed "php[0-9]" 2>/dev/null | grep "installed" | awk -F' ' '{ print $2 }' | sed "s/-.*$//" | cut -d"." -f1,2`
     fi
-    PHP=`which php 2>/dev/null`
+    os_type=`uname -s`
+    if [ "X${os_type}" == "XOpenBSD" ];then
+        PHP=`which php-${PHP_MIN_MAJ} 2>/dev/null`
+    else
+        PHP=`which php 2>/dev/null`
+    fi
     if [ -z "$PHP_VER" ]; then
         if [ -s "$PHP" -a -x "$PHP" ]; then
             PHP_VER=`$PHP -v | head -1 | sed -e "s/PHP \([0-9\]\+\.[0-9\]\+\).*/\1/"`
@@ -684,6 +692,8 @@ check_php_modules() {
             MOD_VER=`$PKG -l "php[0-9]-$MOD" 2>/dev/null | grep "php" | grep "ii" | awk -F' ' '{ print $3 }' | sed "s/-.*$//" | cut -d"." -f1,2`
         elif [ "${PKG##/*/}" = "rpm" ]; then
             MOD_VER=`$PKG -qa "php[0-9]?-$MOD" | sed "s/php[0-9]?\-$MOD-//g" | sed "s/-.*$//" | cut -d"." -f1,2`
+        elif [ "${PKG##/*/}" = "pkg_info" ]; then
+            MOD_VER=`$PKG | grep "php-$MOD" | awk '{print $1}'| sed "s/php-$MOD-//g" | sed "s/p[0-9]*//"`
         else
             MOD_VER=`$PKG list installed "php[0-9]-$MOD" 2>/dev/null | grep "php" | grep "installed" | awk -F' ' '{ print $2 }' | sed "s/-.*$//" | cut -d"." -f1,2`
         fi
@@ -726,6 +736,8 @@ check_sqlite_version() {
         SQLITE_VER=`$PKG -l "sqlite3" | grep "sqlite" | grep ii | awk -F' ' '{ print $3 }' | sed "s/-.*$//" | cut -d"." -f1,2`
     elif [ "${PKG##/*/}" = "rpm" ]; then
         SQLITE_VER=`$PKG -qa "sqlite" | sed "s/sqlite-//g" | sed "s/-.*$//" | cut -d"." -f1,2`
+    elif [ "${PKG##/*/}" = "pkg_info" ]; then
+        SQLITE_VER=`$PKG | grep "sqlite3" | awk '{ print $1 }' | sed "s/sqlite3-//g" | sed "s/p[0-9]*//"`
     else
         SQLITE_VER=`$PKG list installed "sqlite" | grep "installed" | awk -F' ' '{ print $2 }' | sed "s/-.*$//" | cut -d"." -f1,2`
     fi
@@ -1010,7 +1022,12 @@ line ""
 [ -n "$OS" ]&&text "| OS  : $OS" "|"
 text
 line "Checking for tools" "+"
-WHICH=`whereis which | awk '{print $2}'` 
+os_type=`uname -s`
+if [ "X${os_type}" == "XOpenBSD" ];then
+    WHICH=`whereis which | awk '{print $1}'` 
+else
+    WHICH=`whereis which | awk '{print $2}'` 
+fi
 if [ -z $WHICH ]; then
     log "'which' not found (maybe package missing). Aborting..."
     exit 1
@@ -1019,8 +1036,9 @@ PKG=`find_bin dpkg`
 [ -z "$PKG" ] && PKG=`find_bin rpm`
 [ -z "$PKG" ] && PKG=`find_bin yum`
 [ -z "$PKG" ] && PKG=`find_bin pkginfo`
+[ -z "$PKG" ] && PKG=`find_bin pkg_info`
 if [ -z "$PKG" ]; then
-    log "No packet manager (rpm/dpkg/yum/pkginfo) found. Aborting..."
+    log "No packet manager (rpm/dpkg/yum/pkginfo/pkg_info) found. Aborting..."
     exit 1
 fi
 log "Using packet manager $PKG" $PKG
