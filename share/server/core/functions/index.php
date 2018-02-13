@@ -23,6 +23,17 @@
  *
  ******************************************************************************/
 
+/**
+ * Icinga Web 2 integration
+ */
+use Icinga\Application\EmbeddedWeb;
+
+require_once '/icinga-web2/library/Icinga/Application/EmbeddedWeb.php';
+require_once EmbeddedWeb::start('/icinga-web2/library/', '/etc/icingaweb2')
+    ->getModuleManager()
+    ->getModule('nagvis')
+    ->getLibDir() . '/nagvis-includes/init.inc.php';
+
 /*
 * Url: Parse the url to know later what module and
 *      action is called. The requested uri is splitted
