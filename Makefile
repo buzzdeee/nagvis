@@ -6,6 +6,9 @@ SED ?= sed
 ifeq ($(shell uname), Darwin)
     SED := gsed
 endif
+ifeq ($(shell uname), OpenBSD)
+    SED := gsed
+endif
 
 help:
 	@echo "This Makefile is meant to support development. Not useful for installing NagVis."
